@@ -51,6 +51,18 @@
         margin: auto;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* MCaddon specific style */
+    .mcaddon-badge {
+        background: linear-gradient(135deg, #10b981, #059669);
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: white;
+    }
 </style>
 </head>
 
@@ -76,6 +88,11 @@
 
         <!-- Content -->
         <div id="content-container" style="display:none">
+            <!-- MCaddon badge (only shown for mcaddon files) -->
+            <div id="mcaddon-badge" class="mcaddon-badge" style="display:none;">
+                ⚡ Minecraft Addon
+            </div>
+            
             <h2 id="file-name" class="text-xl sm:text-2xl font-bold break-words"></h2>
             <p id="file-size" class="text-gray-400 mt-1 mb-6"></p>
 
@@ -104,6 +121,7 @@ async function fetchFileData() {
     const fileNameEl = document.getElementById("file-name");
     const fileSizeEl = document.getElementById("file-size");
     const buttonContainer = document.getElementById("button-container");
+    const mcaddonBadge = document.getElementById("mcaddon-badge");
 
     try {
         const res = await fetch(`${BASE_URL}/api/file/${FILE_ID}`);
@@ -117,7 +135,11 @@ async function fetchFileData() {
 
         buttonContainer.innerHTML = "";
 
-        if (data.is_media) {
+        // Check if it's an MCaddon file
+        const isMCaddon = data.file_name.toLowerCase().endsWith('.mcaddon');
+        
+        // Check if it's media (original condition) - but we'll override for MCaddon
+        if (data.is_media && !isMCaddon) {
             const mx = `intent:${data.direct_dl_link}#Intent;action=android.intent.action.VIEW;type=video/*;end`;
             const vlc = `intent:${data.direct_dl_link}#Intent;action=android.intent.action.VIEW;type=video/*;package=org.videolan.vlc;end`;
 
@@ -127,9 +149,23 @@ async function fetchFileData() {
                 <a href="${vlc}" class="btn btn-secondary">▶ Play in VLC</a>
             `;
         } else {
+            // For MCaddon and other non-media files
             buttonContainer.innerHTML = `
                 <a href="${data.direct_dl_link}" class="btn btn-primary">⬇ Download File</a>
             `;
+            
+            // Show MCaddon badge if it's an MCaddon file
+            if (isMCaddon) {
+                mcaddonBadge.style.display = "inline-block";
+                
+                // Optional: Change download button text for MCaddon
+                const downloadBtn = buttonContainer.querySelector('.btn-primary');
+                if (downloadBtn) {
+                    downloadBtn.innerHTML = '⬇ Download MCaddon';
+                }
+            } else {
+                mcaddonBadge.style.display = "none";
+            }
         }
 
         loader.style.display = "none";
